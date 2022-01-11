@@ -4,12 +4,16 @@
   "description": "project will try make a samples code for grpc communication with nodejs",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "nodemon server.js",
+    "start": "node server.js"
   },
   "author": "rizwan ishaq",
   "license": "ISC",
   "dependencies": {
     "@grpc/proto-loader": "^0.6.9",
     "grpc": "^1.24.11"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
   }
 }

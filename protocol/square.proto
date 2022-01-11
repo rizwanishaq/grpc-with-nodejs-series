@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package square.v1;
+
+message squareRequest {
+    double number = 1;
+}
+
+message squareResponse {
+    double number=1;
+}
+
+
+
+// Services for the system
+service SquareService {
+    rpc square(squareRequest) returns (squareResponse) {}
+}
