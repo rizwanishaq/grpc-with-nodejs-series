@@ -1,46 +1,76 @@
-// importing grpc related stuff
-const grpc = require("grpc");
+// Importing required libraries
+const grpc = require("@grpc/grpc-js");
 const path = require("path");
 const protoLoader = require("@grpc/proto-loader");
 
-// package definition
+// Load the protocol definition
 const packageDefinition = protoLoader.loadSync(
   path.resolve(__dirname, "protocol/square.proto"),
   {
     keepCase: true,
     longs: String,
     enums: String,
-    default: true,
+    defaults: true,
     oneofs: true,
   }
 );
 
+// Parse the loaded definition
 const protoDescriptor = grpc.loadPackageDefinition(packageDefinition);
 
 // Get the package name
 const squarePackage = protoDescriptor.square.v1;
 
-// calculate the square of the number
-const square = (call, callback) => {
-  const number = call.request.number;
-  const square_number = Math.pow(number, 2);
-  response = { number: square_number };
-  error = null;
-  callback(error, response);
+/**
+ * Handles a streaming operation.
+ * @param {object} stream - The streaming object.
+ */
+const squareStream = (stream) => {
+  // Handle incoming data from the client
+  let uid;
+  stream.on("data", (data) => {
+    uid = data.uid;
+    console.log(`Received data from Stream ${uid}:`, data.number);
+    const square_number = Math.pow(data.number, 2);
+    const response = { number: square_number, uid };
+    stream.write(response); // Send a response back to the client
+  });
+
+  // Handle stream end event
+  stream.on("end", () => {
+    console.log(`Stream ${uid} ended`);
+    stream.end(); // End the stream
+  });
+
+  // Handle stream errors
+  stream.on("error", (error) => {
+    console.error(`Error in Stream ${uid}:`, error);
+  });
 };
 
-// Creating the Server
+// Create the gRPC server
 const server = new grpc.Server();
-// Adding services to the server
+
+// Add services to the server
 server.addService(squarePackage.SquareService.service, {
-  square: square,
+  squareStream: squareStream, // Server streaming RPC method
 });
 
-// Binding the server
-const HOST = "localhost";
-const PORT = 90052;
-server.bind(`${HOST}:${PORT}`, grpc.ServerCredentials.createInsecure());
+// Set server binding information
+const HOST = "0.0.0.0"; // Listen on all available network interfaces
+const PORT = 50051;
 
-// starting the grpc server
-server.start();
-console.log(`Server started on ${HOST}:${PORT}`);
+// Bind the server
+server.bindAsync(
+  `${HOST}:${PORT}`,
+  grpc.ServerCredentials.createInsecure(),
+  (error) => {
+    // Start the server
+    if (error) {
+      console.error("Error binding server:", error);
+      return;
+    }
+    server.start();
+    console.log(`Server started on ${HOST}:${PORT}`);
+  }
+);

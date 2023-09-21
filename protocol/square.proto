@@ -4,15 +4,17 @@ package square.v1;
 
 message squareRequest {
     double number = 1;
+    string uid = 2;
 }
 
 message squareResponse {
     double number=1;
+    string uid=2;
 }
 
 
 
 // Services for the system
 service SquareService {
-    rpc square(squareRequest) returns (squareResponse) {}
+    rpc squareStream(stream squareRequest) returns (stream squareResponse) {}
 }
